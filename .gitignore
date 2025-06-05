@@ -1,0 +1,11 @@
+__pycache__/
+env/
+venv/
+.venv/
+.idea/
+*.log
+*.egg-info/
+pip-wheel-EntityData/
+.env
+.DS_Store
+static/
