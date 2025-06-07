@@ -13,6 +13,7 @@ async def slack_events(request: Request):
 
     if body.get("type") == "event_callback":
         event = body["event"]
+        print(event)
         if event.get("type") == "app_mention" and "bot_id" not in event:
             user_msg = event.get("text")
             user = event.get("user")
