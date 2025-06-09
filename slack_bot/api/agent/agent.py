@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 
 from langchain.agents import create_tool_calling_agent, AgentExecutor
@@ -7,13 +6,21 @@ from langchain_core.messages import SystemMessage
 
 
 from slack_bot.api.agent.prompt import global_agent_prompts
+from slack_bot.api.agent.tools import (get_document_tool,
+                                       get_slack_users_tool,
+                                       get_slack_user_tool,
+                                       query_mongo_tool)
 from slack_bot.core.config import settings
 
 
 
 class SlackAgent:
-    def __init__(self):
+    def __init__(self, channel_id: str):
         self.tools = [
+            get_document_tool,
+            get_slack_users_tool,
+            get_slack_user_tool,
+            query_mongo_tool
         ]
         self.LLM = settings.LLM_MINI.bind_tools(self.tools)
 
@@ -21,6 +28,7 @@ class SlackAgent:
             SystemMessage(
                 content=global_agent_prompts.system_prompt.format(
                     today=datetime.now().isoformat(),
+                    channel_id=channel_id
                 )
             ),
             ("human", "{content}"),

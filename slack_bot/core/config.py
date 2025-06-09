@@ -2,6 +2,7 @@ import os
 import pathlib
 from functools import lru_cache
 from langchain_openai import ChatOpenAI
+import motor.motor_asyncio
 
 from dotenv import load_dotenv
 
@@ -27,7 +28,7 @@ class BaseConfig:
         "universe_domain": os.getenv("SERVICE_ACCOUNT_INFO_UNIVERSE_DOMAIN"),
     }
     LLM_MINI = ChatOpenAI(model="gpt-4.1-mini", temperature=0.3, use_responses_api=True)
-
+    DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGO_DB_URL")).slack
 
 class DevelopmentConfig(BaseConfig):
     Issuer = "http://localhost:8000"
