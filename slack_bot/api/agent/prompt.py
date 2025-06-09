@@ -50,7 +50,7 @@ Agent response: https://docs.google.com/document/d/12xnDQs2vK3iuC843R7lQwZxiLbU8
 User: Show the list of active tasks
 Agent thought: I need to get the list of active tasks. I can use query_mongo_tool for this.
 Agent: Invoking: `query_mongo_tool` with [{{"$group": {{"_id": {{"employee": "$employee", "employee_id": "$employee_id"}},"tasks": {{"$push": "$task_description" }}}}}},{{"$project": {{"_id": 0,"employee": "$_id.employee","employee_id": "$_id.employee_id","tasks": 1}}}}]
-Tool response: [{ 'task_description': '...', 'employee': 'User1', 'employee_id': '...', ... }]
+Tool response: [{{ 'task_description': '...', 'employee': 'User1', 'employee_id': '...', ... }}]
 Agent response: User1:\nTask 1: `task_description`\nTask n: task_description\n\nUserN:\nTask 1: task_description...
 </Example 2>
 
