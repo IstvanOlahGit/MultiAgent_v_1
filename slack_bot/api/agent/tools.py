@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from typing import List
 
 from langchain_community.tools import tool
@@ -87,5 +88,34 @@ async def query_mongo_tool(query: list[dict]):
     except Exception as e:
         print(f"[query_mongo_tool] Error: {e}")
         return None
+
+
+@tool
+async def add_task_tool(task: dict) -> str:
+    """
+    Insert a new task into the MongoDB 'tasks' collection.
+
+    Args:
+        task: dict - A dictionary with keys:
+            - task_description: str
+            - employee: str
+            - employee_id: str
+            - deadline: datetime (can be ISO string or datetime object)
+
+    Returns:
+        str - Confirmation message or error.
+    """
+    try:
+        # Normalize deadline to datetime if it's a string
+        if isinstance(task.get("deadline"), str):
+            task["deadline"] = datetime.fromisoformat(task["deadline"])
+
+        result = await settings.DB_CLIENT.tasks.insert_one(task)
+        if result.inserted_id:
+            return f"Task successfully added with ID {result.inserted_id}"
+        return "Failed to insert task."
+    except Exception as e:
+        print(f"[add_task_tool] Error: {e}")
+        return f"Error inserting task: {str(e)}"
 
 
