@@ -29,6 +29,13 @@ class SlackAgent:
         self.LLM = settings.LLM_MINI.bind_tools(self.tools)
         self.message_history = message_history
 
+        flat_msgs = []
+        for i, msg in enumerate(last_3_msg):
+            if isinstance(msg, list):
+                flat_msgs.extend(msg)
+            else:
+                flat_msgs.append(msg)
+
         self.prompt = ChatPromptTemplate.from_messages([
             SystemMessage(
                 content=global_agent_prompts.system_prompt.format(
@@ -36,7 +43,7 @@ class SlackAgent:
                     channel_id=channel_id
                 )
             ),
-            *last_3_msg,
+            *flat_msgs,
             ("human", "{content}"),
             MessagesPlaceholder(variable_name="agent_scratchpad")
         ])

@@ -49,14 +49,7 @@ def get_last_3_messages(channel_id: str) -> List:
         if i < len(ai_messages):
             mixed.append(ai_messages[i])
 
-    flat_msgs = []
-    for i, msg in enumerate(mixed):
-        if isinstance(msg, list):
-            flat_msgs.extend(msg)
-        else:
-            flat_msgs.append(msg)
-
-    return flat_msgs
+    return mixed
 
 
 async def get_message_history(channel_id: str) -> MongoDBChatMessageHistory:
