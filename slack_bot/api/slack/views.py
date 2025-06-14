@@ -36,7 +36,11 @@ async def process_event(body: dict):
 
     asyncio.create_task(remove_event_id_later(event_id))
     print(event)
-    if event.get("type") == "message" and "bot_id" not in event:
+    if (
+            event.get("type") == "message" and
+            "subtype" not in event and
+            "bot_id" not in event
+    ):
         user_msg = event.get("text")
         channel_id = event.get("channel")
 
