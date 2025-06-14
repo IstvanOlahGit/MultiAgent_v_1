@@ -83,7 +83,7 @@ async def query_mongo_tool(query: list[dict]):
         cursor = settings.DB_CLIENT.tasks.aggregate(query)
         results = await cursor.to_list(length=50)
         if not results:
-            return None
+            return 'This employee has no tasks'
         return results
     except Exception as e:
         print(f"[query_mongo_tool] Error: {e}")
