@@ -41,10 +41,9 @@ async def process_event(body: dict):
         user_msg = event.get("text")
         channel_id = event.get("channel")
 
-        last_3_msg, message_history = await asyncio.gather(
-            get_last_3_messages(channel_id),
-            get_message_history(channel_id),
-        )
+        last_3_msg = get_last_3_messages(channel_id),
+        message_history = await get_message_history(channel_id)
+
 
         agent = SlackAgent(channel_id, last_3_msg, message_history)
         response = await agent.run(user_msg)
