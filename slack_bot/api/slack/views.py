@@ -8,7 +8,6 @@ from slack_bot.api.tasks.model import CreateMessageRequest, MessageResponse
 from slack_bot.core.wrappers import SlackResponseWrapper
 
 
-
 processed_event_ids = set()
 event_id_lock = asyncio.Lock()
 
@@ -36,14 +35,13 @@ async def process_event(body: dict):
         processed_event_ids.add(event_id)
 
     asyncio.create_task(remove_event_id_later(event_id))
-
-    if event.get("type") == "app_mention" and "bot_id" not in event:
+    print(event)
+    if event.get("type") == "message" and "bot_id" not in event:
         user_msg = event.get("text")
         channel_id = event.get("channel")
 
         last_3_msg = get_last_3_messages(channel_id),
         message_history = await get_message_history(channel_id)
-
 
         agent = SlackAgent(channel_id, last_3_msg, message_history)
         response = await agent.run(user_msg)
@@ -54,8 +52,8 @@ async def remove_event_id_later(event_id: str, delay: int = 300):
     await asyncio.sleep(delay)
     async with event_id_lock:
         processed_event_ids.discard(event_id)
-#
-#
+
+
 # @slack_router.post('/')
 # async def create_message(
 #         message_data: CreateMessageRequest
