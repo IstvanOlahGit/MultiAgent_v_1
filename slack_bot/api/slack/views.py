@@ -54,13 +54,15 @@ async def remove_event_id_later(event_id: str, delay: int = 300):
     await asyncio.sleep(delay)
     async with event_id_lock:
         processed_event_ids.discard(event_id)
-
-
+#
+#
 # @slack_router.post('/')
 # async def create_message(
 #         message_data: CreateMessageRequest
 # ) -> SlackResponseWrapper[MessageResponse]:
-#     message_history = await get_message_history(chatId)
-#     agent = SlackAgent(channel_id='C090VM7R2AU')
+#     chat_id = 'C090VM7R2AU'
+#     message_history = await get_message_history(chat_id)
+#     last_3_msg = get_last_3_messages(chat_id),
+#     agent = SlackAgent(chat_id, last_3_msg, message_history)
 #     response = await agent.run(message_data.text)
 #     return SlackResponseWrapper(data=MessageResponse(text=response))

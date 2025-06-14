@@ -8,7 +8,7 @@ from langchain_mongodb import MongoDBChatMessageHistory
 from slack_bot.core.config import settings
 
 
-def get_last_3_messages(channel_id: str) -> List[Union[HumanMessage, AIMessage]]:
+def get_last_3_messages(channel_id: str) -> List:
     collection = settings.MONGO_CLIENT["slack"]["messages"]
 
     cursor = collection.find(
@@ -20,7 +20,6 @@ def get_last_3_messages(channel_id: str) -> List[Union[HumanMessage, AIMessage]]
 
     for doc in cursor:
         raw = doc.get("History")
-        print(raw)
         if not raw:
             continue
 
@@ -50,7 +49,14 @@ def get_last_3_messages(channel_id: str) -> List[Union[HumanMessage, AIMessage]]
         if i < len(ai_messages):
             mixed.append(ai_messages[i])
 
-    return mixed
+    flat_msgs = []
+    for i, msg in enumerate(mixed):
+        if isinstance(msg, list):
+            flat_msgs.extend(msg)
+        else:
+            flat_msgs.append(msg)
+
+    return flat_msgs
 
 
 async def get_message_history(channel_id: str) -> MongoDBChatMessageHistory:
