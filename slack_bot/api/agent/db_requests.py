@@ -1,28 +1,47 @@
+import json
 from typing import List, Union
 
 from langchain_core.messages import HumanMessage, AIMessage
+from slack_bot.api.agent.model import HumanMessageModel, AIMessageModel
 from langchain_mongodb import MongoDBChatMessageHistory
 
 
 from slack_bot.core.config import settings
 
 
-async def get_last_3_messages(channel_id: str) -> List[Union[AIMessage, HumanMessage]]:
+def get_last_3_messages(channel_id: str) -> List[Union[HumanMessageModel, AIMessageModel]]:
     collection = settings.MONGO_CLIENT["slack"]["messages"]
 
-    human_cursor = collection.find(
-        {"session_id": channel_id, "type": "human"}
-    ).sort("_id", -1).limit(3)
+    cursor = collection.find(
+        {"sessionId": channel_id}
+    ).sort("_id", -1).limit(100)
 
-    ai_cursor = collection.find(
-        {"session_id": channel_id, "type": "ai"}
-    ).sort("_id", -1).limit(3)
+    human_messages = []
+    ai_messages = []
 
-    human_docs = list(human_cursor)
-    ai_docs = list(ai_cursor)
+    for doc in cursor:
+        raw = doc.get("History")
+        if not raw:
+            continue
 
-    human_messages = [HumanMessage(content=doc["content"]) for doc in reversed(human_docs)]
-    ai_messages = [AIMessage(content=doc["content"]) for doc in reversed(ai_docs)]
+        try:
+            parsed = json.loads(raw)
+            msg_type = parsed.get("type")
+            content = parsed.get("data", {}).get("content", "")
+
+            if msg_type == "human" and len(human_messages) < 3:
+                human_messages.append(HumanMessageModel(content=content))
+            elif msg_type == "ai" and len(ai_messages) < 3:
+                ai_messages.append(AIMessageModel(content=content))
+
+            if len(human_messages) == 3 and len(ai_messages) == 3:
+                break
+
+        except (json.JSONDecodeError, KeyError):
+            continue
+
+    human_messages.reverse()
+    ai_messages.reverse()
 
     mixed = []
     for i in range(max(len(human_messages), len(ai_messages))):
@@ -56,7 +75,6 @@ async def save_messages(
             ),
         ]
     )
-
 
 
 
