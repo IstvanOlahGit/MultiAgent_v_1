@@ -2,14 +2,13 @@ import json
 from typing import List, Union
 
 from langchain_core.messages import HumanMessage, AIMessage
-from slack_bot.api.agent.model import HumanMessageModel, AIMessageModel
 from langchain_mongodb import MongoDBChatMessageHistory
 
 
 from slack_bot.core.config import settings
 
 
-def get_last_3_messages(channel_id: str) -> List[Union[HumanMessageModel, AIMessageModel]]:
+def get_last_3_messages(channel_id: str) -> List[Union[HumanMessage, AIMessage]]:
     collection = settings.MONGO_CLIENT["slack"]["messages"]
 
     cursor = collection.find(
@@ -21,6 +20,7 @@ def get_last_3_messages(channel_id: str) -> List[Union[HumanMessageModel, AIMess
 
     for doc in cursor:
         raw = doc.get("History")
+        print(raw)
         if not raw:
             continue
 
@@ -30,9 +30,9 @@ def get_last_3_messages(channel_id: str) -> List[Union[HumanMessageModel, AIMess
             content = parsed.get("data", {}).get("content", "")
 
             if msg_type == "human" and len(human_messages) < 3:
-                human_messages.append(HumanMessageModel(content=content))
+                human_messages.append(HumanMessage(content=content))
             elif msg_type == "ai" and len(ai_messages) < 3:
-                ai_messages.append(AIMessageModel(content=content))
+                ai_messages.append(AIMessage(content=content))
 
             if len(human_messages) == 3 and len(ai_messages) == 3:
                 break
@@ -77,6 +77,8 @@ async def save_messages(
     )
 
 
+if __name__ == "__main__":
+    print(get_last_3_messages('C090VM7R2AU'))
 
 
 
