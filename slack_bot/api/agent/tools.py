@@ -1,10 +1,10 @@
 import asyncio
 from datetime import datetime
-from typing import List
+from typing import List, Literal
 
 from langchain_community.tools import tool
 
-from slack_bot.api.google.utils import find_doc_by_name
+from slack_bot.api.google.utils import find_doc_by_name, list_doc_names_range
 from slack_bot.api.slack.utils import get_channel_users, get_user_info
 from slack_bot.api.user.model import SlackUserModel
 from slack_bot.core.config import settings
@@ -24,6 +24,28 @@ async def get_document_tool(document_title: str) -> str | None:
         return document
     except Exception as e:
         print(f"[get_document_tool] Error: {e}")
+        return None
+
+
+@tool
+async def get_document_names_tool(start: int = 1, end: int = 10, return_count_only: bool = False) -> int | List[str] | None:
+    """Retrieve document names within a specific index range, or return the total number of available documents.
+
+    Args:
+        start (int): The starting index (inclusive) of the documents to retrieve. Must be >= 1.
+        end (int): The ending index (exclusive) of the documents to retrieve.
+        return_count_only (bool): If True, returns the total number of documents instead of their names.
+
+    Returns:
+        int | list[str] | None: Total number of documents if `return_count_only` is True,
+                                otherwise a list of document names in the specified range,
+                                or None if an error occurs.
+    """
+    try:
+        docs = list_doc_names_range(start=start, end=end, return_count_only=return_count_only)
+        return docs
+    except Exception as e:
+        print(f"[get_document_names_tool] Error: {e}")
         return None
 
 
@@ -71,51 +93,48 @@ async def get_slack_user_tool(user_id: str) -> SlackUserModel | None:
 
 
 @tool
-async def query_mongo_tool(query: list[dict]):
-    """Query the MongoDB 'tasks' collection using a MongoDB query.
+async def query_mongo_tool(query: dict | list[dict], type_query: Literal["read", "insert", "update", "delete"]):
+    """
+    Perform an operation on the MongoDB 'tasks' collection.
 
     Args:
-        query: list[dict] - Aggregated query for MongoDB.
+        query (dict | list[dict]):
+            - For "read": a list of MongoDB aggregation pipeline stages (list of dicts).
+            - For "insert": a single task document (dict) with keys:
+                - task_description: str
+                - employee: str
+                - employee_id: str
+                - deadline: datetime (can be ISO string or datetime object)
+            - For "update": a dict with keys:
+                - filter: dict — MongoDB filter to locate the task
+                - update: dict — update operations (e.g., {"$set": {...}})
+                  - If updating `deadline`, its value must be a Python datetime object, not a dict or string.
+            - For "delete": a MongoDB filter (dict) identifying the task to delete
+
+        type_query (Literal): Type of the operation — one of "read", "insert", "update", or "delete".
+
     Returns:
-        Any - Result of the query.
+        Any: Result of the query or a confirmation message.
     """
     try:
-        cursor = settings.DB_CLIENT.tasks.aggregate(query)
-        results = await cursor.to_list(length=50)
-        if not results:
-            return 'This employee has no tasks'
-        return results
+        if type_query == "delete":
+            await settings.DB_CLIENT.tasks.delete_one(query)
+            return "Task deleted"
+        elif type_query == "insert":
+            await settings.DB_CLIENT.tasks.insert_one(query)
+            return "Task inserted"
+        elif type_query == "update":
+            await settings.DB_CLIENT.tasks.update_one(query["filter"], query["update"])
+            return "Task updated"
+        elif type_query == "read":
+            cursor = settings.DB_CLIENT.tasks.aggregate(query)
+            results = await cursor.to_list(length=50)
+            if not results:
+                return 'This employee has no tasks'
+            return results
     except Exception as e:
         print(f"[query_mongo_tool] Error: {e}")
         return None
 
-
-@tool
-async def add_task_tool(task: dict) -> str:
-    """
-    Insert a new task into the MongoDB 'tasks' collection.
-
-    Args:
-        task: dict - A dictionary with keys:
-            - task_description: str
-            - employee: str
-            - employee_id: str
-            - deadline: datetime (can be ISO string or datetime object)
-
-    Returns:
-        str - Confirmation message or error.
-    """
-    try:
-        # Normalize deadline to datetime if it's a string
-        if isinstance(task.get("deadline"), str):
-            task["deadline"] = datetime.fromisoformat(task["deadline"])
-
-        result = await settings.DB_CLIENT.tasks.insert_one(task)
-        if result.inserted_id:
-            return f"Task successfully added with ID {result.inserted_id}"
-        return "Failed to insert task."
-    except Exception as e:
-        print(f"[add_task_tool] Error: {e}")
-        return f"Error inserting task: {str(e)}"
 
 
