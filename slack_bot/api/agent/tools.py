@@ -4,6 +4,7 @@ from typing import List, Literal
 
 from langchain_community.tools import tool
 
+from slack_bot.api.agent.utils import normalize_deadline_field
 from slack_bot.api.google.utils import find_doc_by_name, list_doc_names_range
 from slack_bot.api.slack.utils import get_channel_users, get_user_info
 from slack_bot.api.user.model import SlackUserModel
@@ -117,6 +118,8 @@ async def query_mongo_tool(query: dict | list[dict], type_query: Literal["read",
         Any: Result of the query or a confirmation message.
     """
     try:
+        normalize_deadline_field(query)
+
         if type_query == "delete":
             await settings.DB_CLIENT.tasks.delete_one(query)
             return "Task deleted"

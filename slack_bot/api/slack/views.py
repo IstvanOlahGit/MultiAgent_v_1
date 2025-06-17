@@ -35,7 +35,6 @@ async def process_event(body: dict):
         processed_event_ids.add(event_id)
 
     asyncio.create_task(remove_event_id_later(event_id))
-    print(event)
     if (
             event.get("type") == "message" and
             "subtype" not in event and
@@ -56,7 +55,7 @@ async def remove_event_id_later(event_id: str, delay: int = 300):
     await asyncio.sleep(delay)
     async with event_id_lock:
         processed_event_ids.discard(event_id)
-
+#
 #
 # @slack_router.post('/')
 # async def create_message(
