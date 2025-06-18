@@ -12,7 +12,7 @@ from slack_bot.api.agent.tools import (get_document_tool,
                                        get_slack_users_tool,
                                        get_slack_user_tool,
                                        query_mongo_tool,
-                                       get_document_names_tool)
+                                       get_document_names_tool, send_email_tool)
 from slack_bot.core.config import settings
 
 
@@ -24,7 +24,8 @@ class SlackAgent:
             get_slack_users_tool,
             get_slack_user_tool,
             query_mongo_tool,
-            get_document_names_tool
+            get_document_names_tool,
+            send_email_tool
         ]
         self.LLM = settings.LLM_MINI.bind_tools(self.tools)
         self.message_history = message_history

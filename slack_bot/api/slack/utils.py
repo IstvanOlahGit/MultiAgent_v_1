@@ -25,11 +25,14 @@ def get_user_info(user_id: str) -> SlackUserModel | None:
         response = slack_client.users_info(user=user_id)
         user_info = response["user"]
         if not user_info['is_bot']:
+            print(user_info)
             user_profile_info = user_info['profile']
             name = user_profile_info["first_name"] + " " + user_profile_info["last_name"]
+            email = user_profile_info["email"]
             user = SlackUserModel(
                 position=user_profile_info["title"],
                 name=name,
+                email=email,
                 employee_id=user_id
             )
             return user
@@ -51,6 +54,5 @@ def get_channel_users(channel_id: str) -> List[str]:
         return members
     except SlackApiError as e:
         print(f"Error while retrieving channel participants: {e.response['error']}")
-
 
 

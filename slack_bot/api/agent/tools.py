@@ -4,7 +4,7 @@ from typing import List, Literal
 
 from langchain_community.tools import tool
 
-from slack_bot.api.agent.utils import normalize_deadline_field
+from slack_bot.api.agent.utils import normalize_deadline_field, send_verification_email
 from slack_bot.api.google.utils import find_doc_by_name, list_doc_names_range
 from slack_bot.api.slack.utils import get_channel_users, get_user_info
 from slack_bot.api.user.model import SlackUserModel
@@ -140,4 +140,24 @@ async def query_mongo_tool(query: dict | list[dict], type_query: Literal["read",
         return None
 
 
+@tool
+async def send_email_tool(emails: List[str], content: List[str]) -> None:
+    """Send plain text emails to multiple employee email addresses.
+
+        Args:
+            emails: List[str] - A list of recipient employee email addresses.
+            content: List[str] - A list of plain text contents for each email.
+        Returns:
+            None
+        """
+    try:
+        if len(emails) != len(content):
+            print("The number of emails must match the number of content entries.")
+
+        await asyncio.gather(*[
+            send_verification_email(email, message)
+            for email, message in zip(emails, content)
+        ])
+    except Exception as e:
+        print(f"[send_email_tool] Error: {e}")
 

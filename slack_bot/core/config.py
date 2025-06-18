@@ -31,6 +31,7 @@ class BaseConfig:
     LLM_MINI = ChatOpenAI(model="gpt-4.1-mini", temperature=0.3, use_responses_api=True)
     DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGO_DB_URL")).slack
     MONGO_CLIENT = MongoClient(os.getenv('MONGO_DB_URL'))
+    BREVO_API_KEY = os.getenv('BREVO_API_KEY')
 
 class DevelopmentConfig(BaseConfig):
     Issuer = "http://localhost:8000"
