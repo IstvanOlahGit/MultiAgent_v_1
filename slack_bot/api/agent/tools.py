@@ -94,7 +94,7 @@ async def get_slack_user_tool(user_id: str) -> SlackUserModel | None:
 
 
 @tool
-async def query_mongo_tool(query: dict | list[dict], type_query: Literal["read", "insert", "update", "delete"]):
+async def query_mongo_tool(query: dict | list[dict], type_query: Literal["read", "insert", "update", "delete", "delete_many"]):
     """
     Perform an operation on the MongoDB 'tasks' collection.
 
@@ -111,8 +111,9 @@ async def query_mongo_tool(query: dict | list[dict], type_query: Literal["read",
                 - update: dict — update operations (e.g., {"$set": {...}})
                   - If updating `deadline`, its value must be a Python datetime object, not a dict or string.
             - For "delete": a MongoDB filter (dict) identifying the task to delete
+            - For "delete_many": a MongoDB filter (dict) to match multiple tasks to delete
 
-        type_query (Literal): Type of the operation — one of "read", "insert", "update", or "delete".
+        type_query (Literal): Type of the operation — one of "read", "insert", "update", "delete", "delete_many".
 
     Returns:
         Any: Result of the query or a confirmation message.
@@ -123,6 +124,9 @@ async def query_mongo_tool(query: dict | list[dict], type_query: Literal["read",
         if type_query == "delete":
             await settings.DB_CLIENT.tasks.delete_one(query)
             return "Task deleted"
+        elif type_query == "delete_many":
+            result = await settings.DB_CLIENT.tasks.delete_many(query)
+            return f"{result.deleted_count} task(s) deleted"
         elif type_query == "insert":
             await settings.DB_CLIENT.tasks.insert_one(query)
             return "Task inserted"
@@ -133,7 +137,7 @@ async def query_mongo_tool(query: dict | list[dict], type_query: Literal["read",
             cursor = settings.DB_CLIENT.tasks.aggregate(query)
             results = await cursor.to_list(length=50)
             if not results:
-                return 'This employee has no tasks'
+                return "This employee has no tasks"
             return results
     except Exception as e:
         print(f"[query_mongo_tool] Error: {e}")

@@ -1,68 +1,101 @@
 import asyncio
 from datetime import datetime
 
-from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_community.chat_message_histories import MongoDBChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage
+from langgraph_supervisor import create_supervisor
+from langgraph.prebuilt import create_react_agent
 
 from slack_bot.api.agent.db_requests import save_messages
-from slack_bot.api.agent.prompt import global_agent_prompts
-from slack_bot.api.agent.tools import (get_document_tool,
-                                       get_slack_users_tool,
-                                       get_slack_user_tool,
-                                       query_mongo_tool,
-                                       get_document_names_tool, send_email_tool)
+from slack_bot.api.agent.prompt import (
+    MongoDBAgentPrompt,
+    DocsAgentPrompt,
+    EmailAgentPrompt,
+    SupervisorPrompt
+)
+from slack_bot.api.agent.tools import (
+    get_document_tool,
+    get_slack_users_tool,
+    get_slack_user_tool,
+    query_mongo_tool,
+    get_document_names_tool,
+    send_email_tool
+)
 from slack_bot.core.config import settings
-
 
 
 class SlackAgent:
     def __init__(self, channel_id: str, last_3_msg: list, message_history: MongoDBChatMessageHistory):
-        self.tools = [
-            get_document_tool,
-            get_slack_users_tool,
-            get_slack_user_tool,
-            query_mongo_tool,
-            get_document_names_tool,
-            send_email_tool
-        ]
-        self.LLM = settings.LLM_MINI.bind_tools(self.tools)
+        self.channel_id = channel_id
         self.message_history = message_history
+        self.flat_msgs = [msg for m in last_3_msg for msg in (m if isinstance(m, list) else [m])]
+        self.now_str = datetime.now().isoformat()
 
-        flat_msgs = []
-        for i, msg in enumerate(last_3_msg):
-            if isinstance(msg, list):
-                flat_msgs.extend(msg)
-            else:
-                flat_msgs.append(msg)
-
-        self.prompt = ChatPromptTemplate.from_messages([
+        mongo_tools = [query_mongo_tool, get_slack_users_tool, get_slack_user_tool]
+        mongo_prompt = ChatPromptTemplate.from_messages([
             SystemMessage(
-                content=global_agent_prompts.system_prompt.format(
-                    today=datetime.now().isoformat(),
-                    channel_id=channel_id
+                content=MongoDBAgentPrompt.system_prompt.format(
+                    today=self.now_str,
+                    channel_id=self.channel_id
                 )
             ),
-            *flat_msgs,
-            ("human", "{content}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad")
+            MessagesPlaceholder(variable_name="messages")
         ])
 
-        agent = create_tool_calling_agent(
-            llm=self.LLM,
-            prompt=self.prompt,
-            tools=self.tools,
+        mongo_agent_executor = create_react_agent(
+            model=settings.LLM_MINI.bind_tools(mongo_tools),
+            prompt=mongo_prompt,
+            tools=mongo_tools,
+            name='MongoDBAgent'
         )
 
-        self.agent_executor = AgentExecutor(
-            agent=agent,
-            tools=self.tools,
-            verbose=True,
-            return_intermediate_steps=True,
+        docs_tools = [get_document_tool, get_document_names_tool]
+        docs_prompt = ChatPromptTemplate.from_messages([
+            SystemMessage(content=DocsAgentPrompt.system_prompt),
+            MessagesPlaceholder(variable_name="messages")
+        ])
+        docs_agent_executor = create_react_agent(
+            model=settings.LLM_MINI.bind_tools(docs_tools),
+            prompt=docs_prompt,
+            tools=docs_tools,
+            name='DocsAgent'
         )
+
+        email_tools = [send_email_tool]
+        email_prompt = ChatPromptTemplate.from_messages([
+            SystemMessage(content=EmailAgentPrompt.system_prompt),
+            MessagesPlaceholder(variable_name="messages")
+        ])
+        email_agent_executor = create_react_agent(
+            model=settings.LLM_MINI.bind_tools(email_tools),
+            prompt=email_prompt,
+            tools=email_tools,
+            name='EmailAgent'
+        )
+
+        supervisor_prompt = ChatPromptTemplate.from_messages([
+            SystemMessage(content=SupervisorPrompt.system_prompt),
+            *self.flat_msgs,
+            MessagesPlaceholder(variable_name="messages")
+        ])
+        self.supervisor_workflow = create_supervisor(
+            prompt=supervisor_prompt,
+            model=settings.LLM_MINI,
+            agents=[mongo_agent_executor, docs_agent_executor,email_agent_executor],
+            supervisor_name='supervisor'
+        ).compile()
+
 
     async def run(self, content: str) -> str:
-        response = await self.agent_executor.ainvoke({"content": content})
-        asyncio.create_task(save_messages(content, response["output"][-1]["text"], self.message_history))
-        return response["output"][-1]["text"]
+        result = await self.supervisor_workflow.ainvoke({
+            "messages": [
+                {
+                    "role": "user",
+                    "content": content
+                }
+            ]
+        })
+        final_text = result["messages"][-1].content[0]["text"]
+        asyncio.create_task(save_messages(content, final_text, self.message_history))
+        return final_text

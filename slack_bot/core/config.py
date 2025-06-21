@@ -32,6 +32,7 @@ class BaseConfig:
     DB_CLIENT = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGO_DB_URL")).slack
     MONGO_CLIENT = MongoClient(os.getenv('MONGO_DB_URL'))
     BREVO_API_KEY = os.getenv('BREVO_API_KEY')
+    FIREFLIES_TOKEN = os.getenv('FIREFLIES_TOKEN')
 
 class DevelopmentConfig(BaseConfig):
     Issuer = "http://localhost:8000"

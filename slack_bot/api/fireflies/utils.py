@@ -30,7 +30,8 @@ async def get_call_transcription(transcription_id: str):
         }
         response = await client.post("https://api.fireflies.ai/graphql",
                                      json=data,
-                                     headers=settings.get_header(settings.FIREFLIES_TOKEN))
+                                     headers={"Authorization": f"Bearer {settings.FIREFLIES_TOKEN}",
+                                                "Content-Type": "application/json"})
         response.raise_for_status()
         response = response.json()
 
