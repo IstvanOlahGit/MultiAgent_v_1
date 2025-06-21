@@ -82,7 +82,11 @@ class SlackAgent:
         self.supervisor_workflow = create_supervisor(
             prompt=supervisor_prompt,
             model=settings.LLM_MINI,
-            agents=[mongo_agent_executor, docs_agent_executor,email_agent_executor],
+            agents=[
+                mongo_agent_executor,
+                docs_agent_executor,
+                email_agent_executor
+            ],
             supervisor_name='supervisor'
         ).compile()
 

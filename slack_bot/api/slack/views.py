@@ -34,6 +34,7 @@ async def process_event(body: dict):
             return
         processed_event_ids.add(event_id)
 
+    print(event)
     asyncio.create_task(remove_event_id_later(event_id))
     if (
             event.get("type") == "message" and
