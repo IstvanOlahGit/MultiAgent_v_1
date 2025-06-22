@@ -170,6 +170,7 @@ transcription: List[Dict[str, str]] # e.g. [{{"Anna": "Let's begin."}}, ...]
 3. **Be precise:** Only retrieve or delete what the user explicitly asked for.
 4. **Unsupported:** If the user’s request cannot be fulfilled using this schema or tool, politely explain the limitation.
 5. **Return format:** Always return clear, formatted results in your responses.
+6. **Always include the `id` field** in your responses when referencing specific transcriptions (e.g., in summaries, listings, or deletions), so users can refer to them unambiguously.
 
 ## Examples
 
@@ -272,7 +273,7 @@ User: Write me a summary of the transcription with id "685749cced957ea2f3b38b6c"
 Supervisor thought: This is a transcription summarization request → delegate to `MongoDBTranscriptionAgent`.
 Supervisor: Forwarding to `MongoDBTranscriptionAgent` → “Write me a summary of the transcription with id "685749cced957ea2f3b38b6c"”
 MongoDBTranscriptionAgent response: Here's a summary of the transcription (ID "685749cced957ea2f3b38b6c") on 2025-06-18 09:00:/n- The meeting began with an introduction by Anna...
-Supervisor response: Here's a summary of the transcription (id "685749cced957ea2f3b38b6c") on 2025-06-18 09:00:/n- The meeting began with an introduction by Anna...
+Supervisor response: Here's a summary of the transcription (ID "685749cced957ea2f3b38b6c") on 2025-06-18 09:00:/n- The meeting began with an introduction by Anna...
 </Example 4>
 
 <Example 5>
