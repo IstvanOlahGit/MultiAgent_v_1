@@ -1,5 +1,4 @@
 import asyncio
-from datetime import datetime
 from typing import List, Literal
 
 from langchain_community.tools import tool
@@ -141,6 +140,42 @@ async def query_mongo_tool(query: dict | list[dict], type_query: Literal["read",
             return results
     except Exception as e:
         print(f"[query_mongo_tool] Error: {e}")
+        return None
+
+
+@tool
+async def query_mongo_transcription_tool(query: dict | list[dict], type_query: Literal["read", "delete", "delete_many"]):
+    """
+    Perform an operation on the MongoDB 'transcriptions' collection.
+
+    Args:
+        query (dict | list[dict]):
+            - For "read": a list of MongoDB aggregation pipeline stages (list of dicts).
+            - For "delete": a MongoDB filter (dict) identifying the transcription to delete
+            - For "delete_many": a MongoDB filter (dict) to match multiple transcriptions to delete
+
+        type_query (Literal): Type of the operation — one of "read", "delete", "delete_many".
+
+    Returns:
+        Any: Result of the query or a confirmation message.
+    """
+    try:
+        normalize_deadline_field(query)
+
+        if type_query == "delete":
+            await settings.DB_CLIENT.transcriptions.delete_one(query)
+            return "Transcription deleted"
+        elif type_query == "delete_many":
+            result = await settings.DB_CLIENT.transcriptions.delete_many(query)
+            return f"{result.deleted_count} transcription(s) deleted"
+        elif type_query == "read":
+            cursor = settings.DB_CLIENT.transcriptions.aggregate(query)
+            results = await cursor.to_list(length=50)
+            if not results:
+                return "No one transcription found"
+            return results
+    except Exception as e:
+        print(f"[query_mongo_transcription_tool] Error: {e}")
         return None
 
 

@@ -1,5 +1,8 @@
+import asyncio
+
 import httpx
 
+from slack_bot.api.fireflies.model import TranscriptionModel
 from slack_bot.core.config import settings
 
 
@@ -36,3 +39,64 @@ async def get_call_transcription(transcription_id: str):
         response = response.json()
 
     return response['data']['transcript']
+
+
+def parse_conversation(data: dict) -> TranscriptionModel:
+    date_string = data.get("dateString", "")
+    sentences = data.get("sentences", [])
+
+    users_set = set()
+    transcription = []
+
+    prev_speaker = None
+    prev_text = ""
+
+    for sentence in sentences:
+        speaker = sentence.get("speaker_name")
+        text = sentence.get("text", "").strip()
+        if speaker and text:
+            users_set.add(speaker)
+            if speaker == prev_speaker:
+                prev_text += " " + text
+            else:
+                if prev_speaker is not None:
+                    transcription.append({prev_speaker: prev_text})
+                prev_speaker = speaker
+                prev_text = text
+
+    if prev_speaker is not None:
+        transcription.append({prev_speaker: prev_text})
+
+    users = sorted(users_set)
+
+    return TranscriptionModel(
+        dateString=date_string,
+        users=users,
+        transcription=transcription
+    )
+
+async def delete_call_transcription(transcription_id: str):
+    mutation = '''
+        mutation DeleteTranscript($transcriptId: String!) {
+          deleteTranscript(id: $transcriptId) {
+            id
+            title
+          }
+        }
+    '''
+    data = {
+        'query': mutation,
+        'variables': {'transcriptId': transcription_id}
+    }
+
+    headers = {
+        "Authorization": f"Bearer {settings.FIREFLIES_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    async with httpx.AsyncClient(timeout=20) as client:
+        await client.post("https://api.fireflies.ai/graphql", json=data, headers=headers)
+
+
+
+

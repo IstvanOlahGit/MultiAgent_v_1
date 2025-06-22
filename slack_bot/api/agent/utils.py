@@ -26,8 +26,8 @@ async def send_verification_email(email: str, content: str) -> None:
             },
             json={
                 "sender": {
-                    "email": "security@marscapita.com",
-                    "name": "MarsCAPITA"
+                    "email": "werp1338@gmail.com",
+                    "name": "Slack-Bot"
                 },
                 "to": [
                     {
