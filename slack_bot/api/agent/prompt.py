@@ -156,6 +156,7 @@ Use `query_mongo_transcription_tool` for all operations: reading, deleting a sin
 
 ```
 {{
+id: str,
 dateString: str,
 users: List[str],
 transcription: List[Dict[str, str]] # e.g. [{{"Anna": "Let's begin."}}, ...]
@@ -174,9 +175,9 @@ transcription: List[Dict[str, str]] # e.g. [{{"Anna": "Let's begin."}}, ...]
 
 <Example 1>
 Supervisor: Show me the list of all transcriptions
-Agent: Invoking: `query_mongo_transcription_tool` with type_query="read", query=[{{"$project": {{"_id": 0, "dateString": 1, "users": 1}}}}]
-Tool response: [{{"dateString": "2025-06-21T23:34:00.000Z", "users": ["Anna", "Bob"]}}, ...]
-Agent response: Here are the available transcriptions:/n- 2025-06-18 23:34 – Participants: Anna, Bob/n- ...
+Agent: Invoking: `query_mongo_transcription_tool` with type_query="read", query=[{{"$project": {{"_id": 0, "id": 1, "dateString": 1, "users": 1}}}}]
+Tool response: [{{"dateString": "2025-06-21T23:34:00.000Z", "id": "685749cced957ea2f3b38b6c", "users": ["Anna", "Bob"]}}, ...]
+Agent response: Here are the available transcriptions:/n- 2025-06-18 23:34 (ID: 685749cced957ea2f3b38b6c) – Participants: Anna, Bob/n- ...
 </Example 1>
 
 <Example 2>
@@ -187,11 +188,16 @@ Agent response: I’ve deleted 3 old transcriptions from before 2025-06-15.
 </Example 2>
 
 <Example 3>
-Supervisor: Write me a summary of the transcription from "2025-06-18 09:00"
-Agent: Invoking: `query_mongo_transcription_tool` with type_query="read", query=[{{"$match": {{"dateString": "2025-06-18 09:00"}}}},{{"$project": {{"_id": 0, "transcription": 1}}}}]
+Supervisor: Write me a summary of the transcription with id "685749cced957ea2f3b38b6c"
+Agent: Invoking: `query_mongo_transcription_tool` with type_query="read", query=[{{"$match": {{"id": "685749cced957ea2f3b38b6c"}}}},{{"$project": {{"_id": 0, "transcription": 1}}}}]
 Tool response: [{{"transcription": [{{"Anna", "Let's begin."}}, {{"Bob", "We discussed the quarterly results."}}, ...]}}]
-Agent response: Here's a summary of the transcription on 2025-06-18 09:00:/n- The meeting began with an introduction by Anna./n- Bob presented the quarterly results./n- Team members discussed strategies for improving sales./n- Several action items were assigned for follow-up.
-</Example 3>"""
+Agent response: Here's a summary of the transcription (ID "685749cced957ea2f3b38b6c") on 2025-06-18 09:00:/n- The meeting began with an introduction by Anna./n- Bob presented the quarterly results./n- Team members discussed strategies for improving sales./n- Several action items were assigned for follow-up.
+</Example 3>
+
+<Example 4>
+Supervisor: Write me a summary of the transcription from "2025-06-15"
+Agent response: Please specify the transcription "ID" for which you want to get a summary.
+</Example 4>"""
 
 
 class SupervisorPrompt:
@@ -262,11 +268,11 @@ Supervisor response: Reminders sent to all relevant employees!
 </Example 3>
 
 <Example 4>
-User: Write me a summary of the transcription from "2025-06-18"
+User: Write me a summary of the transcription with id "685749cced957ea2f3b38b6c"
 Supervisor thought: This is a transcription summarization request → delegate to `MongoDBTranscriptionAgent`.
-Supervisor: Forwarding to `MongoDBTranscriptionAgent` → “Write me a summary of the transcription from 2025-06-18 09:00”
-MongoDBTranscriptionAgent response: Here's a summary of the transcription on 2025-06-18 09:00:/n- The meeting began with an introduction by Anna...
-Supervisor response: Here's a summary of the transcription on 2025-06-18 09:00:/n- The meeting began with an introduction by Anna...
+Supervisor: Forwarding to `MongoDBTranscriptionAgent` → “Write me a summary of the transcription with id "685749cced957ea2f3b38b6c"”
+MongoDBTranscriptionAgent response: Here's a summary of the transcription (ID "685749cced957ea2f3b38b6c") on 2025-06-18 09:00:/n- The meeting began with an introduction by Anna...
+Supervisor response: Here's a summary of the transcription (id "685749cced957ea2f3b38b6c") on 2025-06-18 09:00:/n- The meeting began with an introduction by Anna...
 </Example 4>
 
 <Example 5>
