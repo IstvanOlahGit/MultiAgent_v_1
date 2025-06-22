@@ -76,7 +76,7 @@ class SlackAgent:
             MessagesPlaceholder(variable_name="messages")
         ])
         transcription_agent_executor = create_react_agent(
-            model=settings.LLM_MINI.bind_tools(email_tools),
+            model=settings.LLM_MINI.bind_tools(transcription_tools),
             prompt=transcription_prompt,
             tools=transcription_tools,
             name='MongoDBTranscriptionAgent'
