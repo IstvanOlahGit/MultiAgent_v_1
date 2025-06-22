@@ -1,3 +1,5 @@
+import asyncio
+
 import httpx
 
 from slack_bot.core.config import settings
@@ -26,8 +28,8 @@ async def send_verification_email(email: str, content: str) -> None:
             },
             json={
                 "sender": {
-                    "email": "werp1338@gmail.com",
-                    "name": "Slack-Bot"
+                    "email": "security@marscapita.com",
+                    "name": "MarsCAPITA"
                 },
                 "to": [
                     {
@@ -39,3 +41,4 @@ async def send_verification_email(email: str, content: str) -> None:
             }
         )
         response.raise_for_status()
+
