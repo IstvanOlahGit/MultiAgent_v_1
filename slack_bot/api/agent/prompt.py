@@ -175,8 +175,8 @@ transcription: List[Dict[str, str]] # e.g. [{{"Anna": "Let's begin."}}, ...]
 <Example 1>
 Supervisor: Show me the list of all transcriptions
 Agent: Invoking: `query_mongo_transcription_tool` with type_query="read", query=[{{"$project": {{"_id": 0, "dateString": 1, "users": 1}}}}]
-Tool response: [{{"dateString": "2025-06-18 09:00", "users": ["Anna", "Bob"]}}, ...]
-Agent response: Here are the available transcriptions:/n- 2025-06-18 09:00 – Participants: Anna, Bob/n- ...
+Tool response: [{{"dateString": "2025-06-21T23:34:00.000Z", "users": ["Anna", "Bob"]}}, ...]
+Agent response: Here are the available transcriptions:/n- 2025-06-18 23:34 – Participants: Anna, Bob/n- ...
 </Example 1>
 
 <Example 2>
@@ -262,7 +262,7 @@ Supervisor response: Reminders sent to all relevant employees!
 </Example 3>
 
 <Example 4>
-User: Write me a summary of the transcription from "2025-06-18 09:00"
+User: Write me a summary of the transcription from "2025-06-18"
 Supervisor thought: This is a transcription summarization request → delegate to `MongoDBTranscriptionAgent`.
 Supervisor: Forwarding to `MongoDBTranscriptionAgent` → “Write me a summary of the transcription from 2025-06-18 09:00”
 MongoDBTranscriptionAgent response: Here's a summary of the transcription on 2025-06-18 09:00:/n- The meeting began with an introduction by Anna...
