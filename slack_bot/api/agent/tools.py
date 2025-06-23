@@ -5,6 +5,7 @@ from langchain_community.tools import tool
 
 from slack_bot.api.agent.utils import normalize_deadline_field, send_verification_email
 from slack_bot.api.google.utils import find_doc_by_name, list_doc_names_range
+from slack_bot.api.responses.responses import generate_answer
 from slack_bot.api.slack.utils import get_channel_users, get_user_info
 from slack_bot.api.user.model import SlackUserModel
 from slack_bot.core.config import settings
@@ -181,14 +182,15 @@ async def query_mongo_transcription_tool(query: dict | list[dict], type_query: L
 
 @tool
 async def send_email_tool(emails: List[str], content: List[str]) -> None:
-    """Send plain text emails to multiple employee email addresses.
+    """
+    Send plain text emails to multiple employee email addresses.
 
-        Args:
-            emails: List[str] - A list of recipient employee email addresses.
-            content: List[str] - A list of plain text contents for each email.
-        Returns:
-            None
-        """
+    Args:
+        emails: List[str] - A list of recipient employee email addresses.
+        content: List[str] - A list of plain text contents for each email.
+    Returns:
+        None
+    """
     try:
         if len(emails) != len(content):
             print("The number of emails must match the number of content entries.")
@@ -199,4 +201,22 @@ async def send_email_tool(emails: List[str], content: List[str]) -> None:
         ])
     except Exception as e:
         print(f"[send_email_tool] Error: {e}")
+
+
+@tool
+async def query_vector_store_tool(query: str) -> str:
+    """
+    Retrieve a factual answer from the vector store based on the user's query.
+
+    Args:
+        query: str - A natural language question or search string.
+
+    Returns:
+        str - A factual answer retrieved from the vector store.
+    """
+    try:
+        answer = await generate_answer(query)
+        return answer
+    except Exception as e:
+        print(f"[query_vector_store_tool] Error: {e}")
 

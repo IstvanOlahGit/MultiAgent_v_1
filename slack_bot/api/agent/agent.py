@@ -16,7 +16,8 @@ from slack_bot.api.agent.tools import (
     query_mongo_tool,
     get_document_names_tool,
     send_email_tool,
-    query_mongo_transcription_tool
+    query_mongo_transcription_tool,
+    query_vector_store_tool
 )
 from slack_bot.core.config import settings
 
@@ -82,6 +83,18 @@ class SlackAgent:
             name='MongoDBTranscriptionAgent'
         )
 
+        vector_search_tools = [query_vector_store_tool]
+        vector_search_prompt = ChatPromptTemplate.from_messages([
+            SystemMessage(content=agent_prompts.mongo_transcription_agent_prompt.system_prompt),
+            MessagesPlaceholder(variable_name="messages")
+        ])
+        vector_search_agent_executor = create_react_agent(
+            model=settings.LLM_MINI.bind_tools(vector_search_tools),
+            prompt=vector_search_prompt,
+            tools=vector_search_tools,
+            name='RagAgent'
+        )
+
         supervisor_prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content=agent_prompts.supervisor_prompt.system_prompt),
             *self.flat_msgs,
@@ -94,7 +107,8 @@ class SlackAgent:
                 mongo_agent_executor,
                 docs_agent_executor,
                 email_agent_executor,
-                transcription_agent_executor
+                transcription_agent_executor,
+                vector_search_agent_executor
             ],
             supervisor_name='supervisor'
         ).compile()

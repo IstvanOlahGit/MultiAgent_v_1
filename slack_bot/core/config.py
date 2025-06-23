@@ -4,6 +4,7 @@ from functools import lru_cache
 from langchain_openai import ChatOpenAI
 import motor.motor_asyncio
 from pymongo import MongoClient
+from openai import AsyncClient
 
 from dotenv import load_dotenv
 
@@ -33,6 +34,8 @@ class BaseConfig:
     MONGO_CLIENT = MongoClient(os.getenv('MONGO_DB_URL'))
     BREVO_API_KEY = os.getenv('BREVO_API_KEY')
     FIREFLIES_TOKEN = os.getenv('FIREFLIES_TOKEN')
+    OPENAI_CLIENT = AsyncClient(api_key=os.getenv('OPENAI_API_KEY'))
+    VECTOR_STORE_ID = os.getenv('VECTOR_STORE_ID')
 
 class DevelopmentConfig(BaseConfig):
     Issuer = "http://localhost:8000"
