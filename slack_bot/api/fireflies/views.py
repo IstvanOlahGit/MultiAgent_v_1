@@ -11,7 +11,7 @@ from slack_bot.api.fireflies.utils import get_call_transcription, parse_conversa
 
 @fireflies_router.post("/call/report")
 async def add_transcription(
-        request: Request,
+    request: Request,
 ):
     payload = await request.json()
     transcription_id = payload['meetingId']

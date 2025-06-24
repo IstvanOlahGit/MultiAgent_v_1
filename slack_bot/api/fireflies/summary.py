@@ -18,4 +18,4 @@ chain = claude_prompt | chat
 
 async def generate_transcription_summary(transcription: List[Dict[str, str]]) -> str:
     response = await chain.ainvoke({"transcription": transcription})
-    return response["content"][0]["text"].strip()
+    return response.content[0]["text"]
