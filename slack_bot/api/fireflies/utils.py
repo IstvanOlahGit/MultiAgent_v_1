@@ -1,8 +1,10 @@
 import asyncio
+from datetime import datetime
 
 import httpx
 
 from slack_bot.api.fireflies.model import TranscriptionModel
+from slack_bot.api.slack.utils import post_message
 from slack_bot.core.config import settings
 
 
@@ -75,6 +77,7 @@ def parse_conversation(data: dict) -> TranscriptionModel:
         transcription=transcription
     )
 
+
 async def delete_call_transcription(transcription_id: str):
     mutation = '''
         mutation DeleteTranscript($transcriptId: String!) {
@@ -97,6 +100,27 @@ async def delete_call_transcription(transcription_id: str):
     async with httpx.AsyncClient(timeout=20) as client:
         await client.post("https://api.fireflies.ai/graphql", json=data, headers=headers)
 
+
+async def post_call_transcripton(transcription: TranscriptionModel):
+    dt = datetime.fromisoformat(transcription.time.replace("Z", "+00:00"))
+
+    date = dt.strftime("%d.%m.%Y")
+    time = dt.strftime("%H:%M")
+
+    template = f""""📞 **New Call Report Is Ready!**
+
+👥 **Members:**  
+{transcription.members}  *(or “None” if empty)*
+
+📆 **Date:** {date}  
+🕐 **Time:** {time}
+
+📝 **Summary:**  
+{transcription.summary}
+
+🆔 **ID:** {transcription.id}"""
+
+    await post_message("C092VC45THP", template)
 
 
 

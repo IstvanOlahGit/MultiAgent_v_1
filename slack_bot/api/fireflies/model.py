@@ -7,3 +7,4 @@ class TranscriptionModel(MongoBaseModel):
     dateString: str
     users: List[str]
     transcription: List[Dict[str, str]]
+    summary: str | None = None

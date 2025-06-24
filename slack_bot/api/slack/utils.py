@@ -25,7 +25,6 @@ def get_user_info(user_id: str) -> SlackUserModel | None:
         response = slack_client.users_info(user=user_id)
         user_info = response["user"]
         if not user_info['is_bot']:
-            print(user_info)
             user_profile_info = user_info['profile']
             name = user_profile_info["first_name"] + " " + user_profile_info["last_name"]
             email = user_profile_info["email"]
