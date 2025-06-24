@@ -54,17 +54,21 @@ def parse_conversation(data: dict) -> TranscriptionModel:
     prev_text = ""
 
     for sentence in sentences:
-        speaker = sentence.get("speaker_name")
+        speaker = sentence.get("speaker_name") or "Speaker"
         text = sentence.get("text", "").strip()
-        if speaker and text:
-            users_set.add(speaker)
-            if speaker == prev_speaker:
-                prev_text += " " + text
-            else:
-                if prev_speaker is not None:
-                    transcription.append({prev_speaker: prev_text})
-                prev_speaker = speaker
-                prev_text = text
+
+        if not text:
+            continue
+
+        users_set.add(speaker)
+
+        if speaker == prev_speaker:
+            prev_text += " " + text
+        else:
+            if prev_speaker is not None:
+                transcription.append({prev_speaker: prev_text})
+            prev_speaker = speaker
+            prev_text = text
 
     if prev_speaker is not None:
         transcription.append({prev_speaker: prev_text})
@@ -102,23 +106,24 @@ async def delete_call_transcription(transcription_id: str):
 
 
 async def post_call_transcripton(transcription: TranscriptionModel):
-    dt = datetime.fromisoformat(transcription.time.replace("Z", "+00:00"))
+    dt = datetime.fromisoformat(transcription.dateString.replace("Z", "+00:00"))
 
     date = dt.strftime("%d.%m.%Y")
     time = dt.strftime("%H:%M")
+    members = ", ".join(transcription.users) if transcription.users else "None"
 
-    template = f""""📞 **New Call Report Is Ready!**
+    template = f"""📞 New Call Report Is Ready!
 
-👥 **Members:**  
-{transcription.members}  *(or “None” if empty)*
+👥 Members:
+{members} 
 
-📆 **Date:** {date}  
-🕐 **Time:** {time}
+📆 Date: {date}  
+🕐 Time: {time}
 
-📝 **Summary:**  
+📝 Summary:  
 {transcription.summary}
 
-🆔 **ID:** {transcription.id}"""
+🆔 ID: {transcription.id}"""
 
     await post_message("C092VC45THP", template)
 
