@@ -23,8 +23,10 @@ from slack_bot.core.config import settings
 
 
 class SlackAgent:
-    def __init__(self, channel_id: str, last_3_msg: list, message_history: MongoDBChatMessageHistory):
+    def __init__(self, channel_id: str, last_3_msg: list, message_history: MongoDBChatMessageHistory, user_id: str, user_name: str):
         self.channel_id = channel_id
+        self.user_id = user_id
+        self.user_name = user_name
         self.message_history = message_history
         self.flat_msgs = [msg for m in last_3_msg for msg in (m if isinstance(m, list) else [m])]
         self.now_str = datetime.now().isoformat()
@@ -34,7 +36,9 @@ class SlackAgent:
             SystemMessage(
                 content=agent_prompts.mongo_agent_prompt.system_prompt.format(
                     today=self.now_str,
-                    channel_id=self.channel_id
+                    channel_id=self.channel_id,
+                    user_id=self.user_id,
+                    user_name=self.user_name
                 )
             ),
             MessagesPlaceholder(variable_name="messages")
